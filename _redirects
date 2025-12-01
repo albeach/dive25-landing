@@ -1,7 +1,5 @@
-# Cloudflare Pages Redirects
-# Redirect www to apex domain
-https://www.dive25.com/* https://dive25.com/:splat 301
+# Health check endpoint
+/health  /health.html  200
 
-# Health check endpoint for monitoring
-/health /health.html 200
-
+# WWW redirect
+https://www.dive25.com/*  https://dive25.com/:splat  301!

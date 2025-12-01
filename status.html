@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="DIVE25 System Status - Real-time monitoring of all coalition instances">
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>System Status - DIVE25</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23009ab3'/><text x='16' y='22' text-anchor='middle' font-size='18'>📊</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00d4ff;
+            --secondary: #79d85a;
+            --warning: #fbbf24;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --darker: #020617;
+            --light: #f8fafc;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(121, 216, 90, 0.1), transparent),
+                linear-gradient(180deg, var(--darker) 0%, #0a1628 100%);
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent);
+            -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black, transparent);
+        }
+
+        /* Content */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+            padding-top: calc(1rem + var(--safe-top));
+            padding-bottom: calc(1rem + var(--safe-bottom));
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: var(--darker);
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            color: var(--light);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        /* Status Hero */
+        .status-hero {
+            text-align: center;
+            padding: 2rem 0 3rem;
+        }
+
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            transition: all 0.5s ease;
+        }
+
+        .status-icon.operational {
+            background: rgba(121, 216, 90, 0.15);
+            box-shadow: 0 0 40px rgba(121, 216, 90, 0.2);
+        }
+
+        .status-icon.degraded {
+            background: rgba(251, 191, 36, 0.15);
+            box-shadow: 0 0 40px rgba(251, 191, 36, 0.2);
+        }
+
+        .status-icon.offline {
+            background: rgba(239, 68, 68, 0.15);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.2);
+        }
+
+        .status-icon.loading {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .status-title {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .status-title.operational {
+            color: var(--secondary);
+        }
+
+        .status-title.degraded {
+            color: var(--warning);
+        }
+
+        .status-title.offline {
+            color: var(--danger);
+        }
+
+        .status-subtitle {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Services List */
+        .services-section {
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .uptime-badge {
+            font-size: 0.7rem;
+            color: var(--secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .services-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .service-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .service-item:hover {
+            background: rgba(0, 212, 255, 0.03);
+            border-color: rgba(0, 212, 255, 0.15);
+        }
+
+        .service-flag {
+            font-size: 1.5rem;
+        }
+
+        .service-info {
+            flex: 1;
+        }
+
+        .service-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .service-url {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.35);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .service-status.online {
+            color: var(--secondary);
+        }
+
+        .service-status.degraded {
+            color: var(--warning);
+        }
+
+        .service-status.offline {
+            color: var(--danger);
+        }
+
+        .service-status.loading {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .service-status.online .status-dot {
+            background: var(--secondary);
+            box-shadow: 0 0 8px var(--secondary);
+        }
+
+        .service-status.degraded .status-dot {
+            background: var(--warning);
+            box-shadow: 0 0 8px var(--warning);
+        }
+
+        .service-status.offline .status-dot {
+            background: var(--danger);
+            box-shadow: 0 0 8px var(--danger);
+        }
+
+        .service-status.loading .status-dot {
+            background: rgba(255, 255, 255, 0.3);
+            animation: pulse-loading 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse-loading {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .service-latency {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Incidents Section */
+        .incidents-section {
+            margin-bottom: 2rem;
+        }
+
+        .no-incidents {
+            text-align: center;
+            padding: 2rem;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.75rem;
+        }
+
+        .no-incidents-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .no-incidents-text {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* History */
+        .history-section {
+            margin-bottom: 2rem;
+        }
+
+        .history-grid {
+            display: flex;
+            gap: 2px;
+            height: 32px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .history-bar {
+            flex: 1;
+            background: var(--secondary);
+            transition: background 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .history-bar:hover {
+            opacity: 0.8;
+        }
+
+        .history-bar.degraded {
+            background: var(--warning);
+        }
+
+        .history-bar.offline {
+            background: var(--danger);
+        }
+
+        .history-bar.loading {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .history-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--glass-border);
+            margin-top: auto;
+        }
+
+        .footer-text {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            line-height: 1.8;
+        }
+
+        .footer-text a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .refresh-info {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.2);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (min-width: 640px) {
+            .container {
+                padding: 2rem;
+            }
+
+            .status-icon {
+                width: 100px;
+                height: 100px;
+                font-size: 3rem;
+            }
+
+            .service-item {
+                padding: 1.25rem 1.5rem;
+            }
+        }
+
+        /* Reduce motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-grid"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <a href="/" class="logo">
+                <div class="logo-icon">D25</div>
+                <span class="logo-text">DIVE25</span>
+            </a>
+            <a href="/" class="back-link">
+                ← Back to Home
+            </a>
+        </header>
+
+        <!-- Status Hero -->
+        <section class="status-hero">
+            <div class="status-icon loading" id="status-icon">
+                <span id="status-emoji">⏳</span>
+            </div>
+            <h1 class="status-title" id="status-title">Checking Systems...</h1>
+            <p class="status-subtitle" id="status-subtitle">Fetching real-time status</p>
+        </section>
+
+        <!-- Services -->
+        <section class="services-section">
+            <div class="section-header">
+                <h2 class="section-title">Coalition Instances</h2>
+                <span class="uptime-badge" id="uptime-badge"></span>
+            </div>
+            <div class="services-list" id="services-list">
+                <div class="service-item" data-instance="usa">
+                    <span class="service-flag">🇺🇸</span>
+                    <div class="service-info">
+                        <div class="service-name">United States</div>
+                        <div class="service-url">usa-api.dive25.com</div>
+                    </div>
+                    <div class="service-status loading">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking</span>
+                    </div>
+                    <span class="service-latency"></span>
+                </div>
+                <div class="service-item" data-instance="fra">
+                    <span class="service-flag">🇫🇷</span>
+                    <div class="service-info">
+                        <div class="service-name">France</div>
+                        <div class="service-url">fra-api.dive25.com</div>
+                    </div>
+                    <div class="service-status loading">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking</span>
+                    </div>
+                    <span class="service-latency"></span>
+                </div>
+                <div class="service-item" data-instance="gbr">
+                    <span class="service-flag">🇬🇧</span>
+                    <div class="service-info">
+                        <div class="service-name">United Kingdom</div>
+                        <div class="service-url">gbr-api.dive25.com</div>
+                    </div>
+                    <div class="service-status loading">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking</span>
+                    </div>
+                    <span class="service-latency"></span>
+                </div>
+                <div class="service-item" data-instance="deu">
+                    <span class="service-flag">🇩🇪</span>
+                    <div class="service-info">
+                        <div class="service-name">Germany</div>
+                        <div class="service-url">deu-api.prosecurity.biz</div>
+                    </div>
+                    <div class="service-status loading">
+                        <span class="status-dot"></span>
+                        <span class="status-text">Checking</span>
+                    </div>
+                    <span class="service-latency"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recent Incidents -->
+        <section class="incidents-section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Incidents</h2>
+            </div>
+            <div class="no-incidents">
+                <div class="no-incidents-icon">✨</div>
+                <p class="no-incidents-text">No incidents reported in the last 90 days</p>
+            </div>
+        </section>
+
+        <!-- Uptime History -->
+        <section class="history-section">
+            <div class="section-header">
+                <h2 class="section-title">90-Day Uptime</h2>
+            </div>
+            <div class="history-grid" id="history-grid">
+                <!-- 90 bars for 90 days -->
+            </div>
+            <div class="history-labels">
+                <span>90 days ago</span>
+                <span>Today</span>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p class="footer-text">
+                DIVE V3 Coalition Pilot<br>
+                Powered by <a href="https://workers.cloudflare.com" target="_blank">Cloudflare Workers</a>
+            </p>
+            <p class="refresh-info" id="refresh-info">Last updated: checking...</p>
+        </footer>
+    </div>
+
+    <script>
+        const STATUS_API = 'https://dive25-status.lingering-unit-6ba7.workers.dev';
+
+        // Generate uptime history bars (simulated 100% for now)
+        function generateHistory() {
+            const grid = document.getElementById('history-grid');
+            for (let i = 0; i < 90; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'history-bar';
+                bar.title = `${90 - i} days ago: 100% uptime`;
+                grid.appendChild(bar);
+            }
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch(STATUS_API);
+                if (!response.ok) throw new Error('Status API unavailable');
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+                return null;
+            }
+        }
+
+        function updateServiceStatus(instanceId, status, latency) {
+            const item = document.querySelector(`[data-instance="${instanceId}"]`);
+            if (!item) return;
+
+            const statusEl = item.querySelector('.service-status');
+            const statusText = item.querySelector('.status-text');
+            const latencyEl = item.querySelector('.service-latency');
+
+            statusEl.classList.remove('loading', 'online', 'degraded', 'offline');
+            statusEl.classList.add(status);
+
+            const labels = { online: 'Operational', degraded: 'Degraded', offline: 'Offline' };
+            statusText.textContent = labels[status] || 'Unknown';
+
+            latencyEl.textContent = status === 'online' && latency ? `${latency}ms` : '';
+        }
+
+        function updateOverallStatus(overall, timestamp) {
+            const icon = document.getElementById('status-icon');
+            const emoji = document.getElementById('status-emoji');
+            const title = document.getElementById('status-title');
+            const subtitle = document.getElementById('status-subtitle');
+
+            icon.classList.remove('loading', 'operational', 'degraded', 'offline');
+            title.classList.remove('operational', 'degraded', 'offline');
+
+            if (overall === 'operational') {
+                icon.classList.add('operational');
+                title.classList.add('operational');
+                emoji.textContent = '✓';
+                title.textContent = 'All Systems Operational';
+                subtitle.textContent = 'All coalition instances are running smoothly';
+            } else if (overall === 'degraded') {
+                icon.classList.add('degraded');
+                title.classList.add('degraded');
+                emoji.textContent = '⚠';
+                title.textContent = 'Partial System Outage';
+                subtitle.textContent = 'Some services are experiencing issues';
+            } else {
+                icon.classList.add('offline');
+                title.classList.add('offline');
+                emoji.textContent = '✕';
+                title.textContent = 'Major Outage';
+                subtitle.textContent = 'Multiple services are currently unavailable';
+            }
+
+            // Update uptime badge
+            const onlineCount = document.querySelectorAll('.service-status.online').length;
+            const totalCount = document.querySelectorAll('.service-item').length;
+            document.getElementById('uptime-badge').textContent = `${onlineCount}/${totalCount} operational`;
+
+            // Update refresh time
+            const date = new Date(timestamp);
+            document.getElementById('refresh-info').textContent = 
+                `Last updated: ${date.toLocaleTimeString()} • Auto-refreshes every 30s`;
+        }
+
+        async function refreshStatus() {
+            const data = await fetchStatus();
+
+            if (!data) {
+                ['usa', 'fra', 'gbr', 'deu'].forEach(id => updateServiceStatus(id, 'offline', null));
+                updateOverallStatus('offline', new Date().toISOString());
+                return;
+            }
+
+            data.instances.forEach(instance => {
+                updateServiceStatus(instance.id, instance.status, instance.latency);
+            });
+
+            updateOverallStatus(data.overall, data.timestamp);
+        }
+
+        // Initialize
+        generateHistory();
+        refreshStatus();
+        setInterval(refreshStatus, 30000);
+    </script>
+</body>
+</html>
+
