@@ -22,6 +22,8 @@
         :root {
             --primary: #00d4ff;
             --secondary: #79d85a;
+            --warning: #fbbf24;
+            --danger: #ef4444;
             --dark: #0f172a;
             --darker: #020617;
             --light: #f8fafc;
@@ -143,12 +145,30 @@
             border-color: rgba(0, 212, 255, 0.3);
         }
 
-        .status-indicator {
+        .status-btn .overall-indicator {
             width: 6px;
             height: 6px;
-            background: var(--secondary);
             border-radius: 50%;
-            animation: pulse-dot 2s ease-in-out infinite;
+            background: var(--secondary);
+            transition: background 0.3s ease;
+        }
+
+        .status-btn .overall-indicator.loading {
+            background: rgba(255, 255, 255, 0.3);
+            animation: pulse-loading 1s ease-in-out infinite;
+        }
+
+        .status-btn .overall-indicator.degraded {
+            background: var(--warning);
+        }
+
+        .status-btn .overall-indicator.offline {
+            background: var(--danger);
+        }
+
+        @keyframes pulse-loading {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
         }
 
         @keyframes pulse-dot {
@@ -255,6 +275,14 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 30px rgba(0, 212, 255, 0.05);
         }
 
+        .instance-card.offline {
+            opacity: 0.7;
+        }
+
+        .instance-card.offline:hover {
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
         .instance-flag {
             font-size: 2rem;
             line-height: 1;
@@ -283,14 +311,56 @@
             align-items: center;
             gap: 0.35rem;
             font-size: 0.7rem;
+            transition: color 0.3s ease;
+        }
+
+        .instance-status.online {
             color: var(--secondary);
+        }
+
+        .instance-status.degraded {
+            color: var(--warning);
+        }
+
+        .instance-status.offline {
+            color: var(--danger);
+        }
+
+        .instance-status.loading {
+            color: rgba(255, 255, 255, 0.4);
         }
 
         .status-dot {
             width: 5px;
             height: 5px;
-            background: var(--secondary);
             border-radius: 50%;
+            transition: background 0.3s ease;
+        }
+
+        .instance-status.online .status-dot {
+            background: var(--secondary);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .instance-status.degraded .status-dot {
+            background: var(--warning);
+            animation: pulse-dot 1s ease-in-out infinite;
+        }
+
+        .instance-status.offline .status-dot {
+            background: var(--danger);
+        }
+
+        .instance-status.loading .status-dot {
+            background: rgba(255, 255, 255, 0.3);
+            animation: pulse-loading 1s ease-in-out infinite;
+        }
+
+        .latency {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            margin-left: auto;
         }
 
         /* Features */
@@ -373,6 +443,13 @@
         .footer-text a {
             color: var(--primary);
             text-decoration: none;
+        }
+
+        .last-updated {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.2);
+            font-family: 'JetBrains Mono', monospace;
+            margin-top: 0.5rem;
         }
 
         /* Tablet and up */
@@ -536,8 +613,8 @@
                 <span class="logo-text">DIVE25</span>
             </div>
             <a href="https://status.dive25.com" class="status-btn">
-                <span class="status-indicator"></span>
-                <span>Status</span>
+                <span class="overall-indicator loading" id="overall-status"></span>
+                <span id="overall-text">Checking...</span>
             </a>
         </header>
 
@@ -560,51 +637,55 @@
             <section class="instances-section">
                 <h2 class="section-label">Select Instance</h2>
                 <div class="instances-grid">
-                    <a href="https://usa-app.dive25.com" class="instance-card">
+                    <a href="https://usa-app.dive25.com" class="instance-card" data-instance="usa">
                         <span class="instance-flag">🇺🇸</span>
                         <div class="instance-info">
                             <h3>United States</h3>
                             <p>USA</p>
                         </div>
-                        <div class="instance-status">
+                        <div class="instance-status loading">
                             <span class="status-dot"></span>
-                            <span>Online</span>
+                            <span class="status-text">Checking...</span>
+                            <span class="latency"></span>
                         </div>
                     </a>
 
-                    <a href="https://fra-app.dive25.com" class="instance-card">
+                    <a href="https://fra-app.dive25.com" class="instance-card" data-instance="fra">
                         <span class="instance-flag">🇫🇷</span>
                         <div class="instance-info">
                             <h3>France</h3>
                             <p>FRA</p>
                         </div>
-                        <div class="instance-status">
+                        <div class="instance-status loading">
                             <span class="status-dot"></span>
-                            <span>Online</span>
+                            <span class="status-text">Checking...</span>
+                            <span class="latency"></span>
                         </div>
                     </a>
 
-                    <a href="https://gbr-app.dive25.com" class="instance-card">
+                    <a href="https://gbr-app.dive25.com" class="instance-card" data-instance="gbr">
                         <span class="instance-flag">🇬🇧</span>
                         <div class="instance-info">
                             <h3>United Kingdom</h3>
                             <p>GBR</p>
                         </div>
-                        <div class="instance-status">
+                        <div class="instance-status loading">
                             <span class="status-dot"></span>
-                            <span>Online</span>
+                            <span class="status-text">Checking...</span>
+                            <span class="latency"></span>
                         </div>
                     </a>
 
-                    <a href="https://deu-app.prosecurity.biz" class="instance-card">
+                    <a href="https://deu-app.prosecurity.biz" class="instance-card" data-instance="deu">
                         <span class="instance-flag">🇩🇪</span>
                         <div class="instance-info">
                             <h3>Germany</h3>
                             <p>DEU</p>
                         </div>
-                        <div class="instance-status">
+                        <div class="instance-status loading">
                             <span class="status-dot"></span>
-                            <span>Online</span>
+                            <span class="status-text">Checking...</span>
+                            <span class="latency"></span>
                         </div>
                     </a>
                 </div>
@@ -654,7 +735,113 @@
                 DIVE V3 Coalition Pilot • Keycloak × OPA × Next.js<br>
                 <a href="https://status.dive25.com">System Status</a>
             </p>
+            <p class="last-updated" id="last-updated"></p>
         </footer>
     </div>
+
+    <script>
+        const STATUS_API = 'https://dive25-status.lingering-unit-6ba7.workers.dev';
+        
+        async function fetchStatus() {
+            try {
+                const response = await fetch(STATUS_API);
+                if (!response.ok) throw new Error('Status API unavailable');
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to fetch status:', error);
+                return null;
+            }
+        }
+
+        function updateInstanceStatus(instanceId, status, latency) {
+            const card = document.querySelector(`[data-instance="${instanceId}"]`);
+            if (!card) return;
+
+            const statusEl = card.querySelector('.instance-status');
+            const statusText = card.querySelector('.status-text');
+            const latencyEl = card.querySelector('.latency');
+
+            // Remove all status classes
+            statusEl.classList.remove('loading', 'online', 'degraded', 'offline');
+            card.classList.remove('offline');
+
+            // Add appropriate class
+            statusEl.classList.add(status);
+            if (status === 'offline') card.classList.add('offline');
+
+            // Update text
+            const statusLabels = {
+                online: 'Online',
+                degraded: 'Degraded',
+                offline: 'Offline'
+            };
+            statusText.textContent = statusLabels[status] || 'Unknown';
+
+            // Show latency for online instances
+            if (status === 'online' && latency) {
+                latencyEl.textContent = `${latency}ms`;
+            } else {
+                latencyEl.textContent = '';
+            }
+        }
+
+        function updateOverallStatus(overall) {
+            const indicator = document.getElementById('overall-status');
+            const text = document.getElementById('overall-text');
+
+            indicator.classList.remove('loading', 'degraded', 'offline');
+            
+            if (overall === 'operational') {
+                indicator.style.background = 'var(--secondary)';
+                text.textContent = 'All Systems Go';
+            } else if (overall === 'degraded') {
+                indicator.classList.add('degraded');
+                text.textContent = 'Degraded';
+            } else {
+                indicator.classList.add('offline');
+                text.textContent = 'Issues';
+            }
+        }
+
+        function updateLastChecked(timestamp) {
+            const el = document.getElementById('last-updated');
+            if (!el) return;
+            
+            const date = new Date(timestamp);
+            el.textContent = `Last checked: ${date.toLocaleTimeString()}`;
+        }
+
+        async function refreshStatus() {
+            const data = await fetchStatus();
+            
+            if (!data) {
+                // API failed - show unknown for all
+                ['usa', 'fra', 'gbr', 'deu'].forEach(id => {
+                    updateInstanceStatus(id, 'offline', null);
+                });
+                const indicator = document.getElementById('overall-status');
+                const text = document.getElementById('overall-text');
+                indicator.classList.remove('loading');
+                indicator.classList.add('offline');
+                text.textContent = 'Unknown';
+                return;
+            }
+
+            // Update each instance
+            data.instances.forEach(instance => {
+                updateInstanceStatus(instance.id, instance.status, instance.latency);
+            });
+
+            // Update overall status
+            updateOverallStatus(data.overall);
+            updateLastChecked(data.timestamp);
+        }
+
+        // Initial fetch
+        refreshStatus();
+
+        // Refresh every 30 seconds
+        setInterval(refreshStatus, 30000);
+    </script>
 </body>
 </html>
